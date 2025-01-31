@@ -1,0 +1,1 @@
+# VScode-Hide-Notifications
