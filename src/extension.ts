@@ -1,26 +1,63 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { NotificationTreeProvider } from './notification-view';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+let notificationProvider: NotificationTreeProvider;
+
 export function activate(context: vscode.ExtensionContext) {
+    notificationProvider = new NotificationTreeProvider();
+    vscode.window.registerTreeDataProvider(
+        'notificationExplorer',
+        notificationProvider
+    );
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "vscode-hide-notifications" is now active!');
+    const notificationLog = vscode.window.createOutputChannel('Notifications Log');
+    function logNotification(message: string, type: 'info' | 'warning' | 'error') {
+        notificationLog.appendLine(`[${type.toUpperCase()}] ${new Date().toLocaleTimeString()}: ${message}`);
+        notificationProvider.addNotification(message, type); // Add to Notification Explorer
+    }
+    const originalShowInformationMessage = vscode.window.showInformationMessage;
+    const originalShowWarningMessage = vscode.window.showWarningMessage;
+    const originalShowErrorMessage = vscode.window.showErrorMessage;
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('vscode-hide-notifications.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from vscode-hide-notifications!');
-	});
+    const overrideNotification = (
+        originalMethod: typeof vscode.window.showInformationMessage,
+        type: 'info' | 'warning' | 'error'
+    ) => {
+        return function (message: string, ...args: any[]) {
+            logNotification(message, type); // Log and add to Notification Explorer
+            return Promise.resolve(undefined); // Suppress popup
+        };
+    };
 
-	context.subscriptions.push(disposable);
+    vscode.window.showInformationMessage = overrideNotification(originalShowInformationMessage, 'info');
+    vscode.window.showWarningMessage = overrideNotification(originalShowWarningMessage, 'warning');
+    vscode.window.showErrorMessage = overrideNotification(originalShowErrorMessage, 'error');
+    vscode.window.showErrorMessage('Test error message');
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('notification-explorer.clear', () => notificationProvider.clear())
+    );
+
+    const originalConsoleLog = console.log;
+    console.log = (...args: any[]) => {
+        const message = args.join(' ');
+        logNotification(message, 'info');
+        originalConsoleLog(...args);
+    };
+
+    const originalConsoleWarn = console.warn;
+    console.warn = (...args: any[]) => {
+        const message = args.join(' ');
+        logNotification(message, 'warning');
+        originalConsoleWarn(...args);
+    };
+
+    const originalConsoleError = console.error;
+    console.error = (...args: any[]) => {
+        const message = args.join(' ');
+        logNotification(message, 'error');
+        originalConsoleError(...args);
+    };
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

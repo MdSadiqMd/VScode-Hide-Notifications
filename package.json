@@ -1,7 +1,7 @@
 {
     "name": "vscode-hide-notifications",
-    "displayName": "vscode-hide-notifications",
-    "description": "",
+    "displayName": "VSCode Notification Manager",
+    "description": "Manages VS Code notifications in a dedicated view",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.96.0"
@@ -12,30 +12,54 @@
     "activationEvents": [],
     "main": "./out/extension.js",
     "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "notification-explorer-container",
+                    "title": "Notifications",
+                    "icon": "$(bell)"
+                }
+            ]
+        },
+        "views": {
+            "notification-explorer-container": [
+                {
+                    "type": "tree",
+                    "id": "notificationExplorer",
+                    "name": "Notifications",
+                    "visibility": "visible"
+                }
+            ]
+        },
         "commands": [
             {
-                "command": "vscode-hide-notifications.helloWorld",
-                "title": "Hello World"
+                "command": "notification-explorer.clear",
+                "title": "Clear Notifications",
+                "icon": "$(trash)"
             }
-        ]
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "notification-explorer.clear",
+                    "when": "view == notificationExplorer",
+                    "group": "navigation"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "pretest": "npm run compile && npm run lint",
-        "lint": "eslint src",
-        "test": "vscode-test"
+        "pretest": "npm run compile"
     },
     "devDependencies": {
         "@types/vscode": "^1.96.0",
-        "@types/mocha": "^10.0.10",
         "@types/node": "20.x",
-        "@typescript-eslint/eslint-plugin": "^8.17.0",
-        "@typescript-eslint/parser": "^8.17.0",
-        "eslint": "^9.16.0",
-        "typescript": "^5.7.2",
-        "@vscode/test-cli": "^0.0.10",
-        "@vscode/test-electron": "^2.4.1"
+        "@typescript-eslint/eslint-plugin": "^6.9.0",
+        "@typescript-eslint/parser": "^6.9.0",
+        "eslint": "^8.52.0",
+        "typescript": "^5.2.2"
     }
 }
